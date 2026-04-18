@@ -8,18 +8,23 @@ type TaskListProps = {
   onToggleTask: (id: string) => void;
   onUpdateTaskText: (id: string, text: string) => void;
   onDelete: (id: string) => void;
+  /** Shown when there are no tasks to render (e.g. empty filter). */
+  emptyMessage?: string;
 };
+
+const defaultEmptyMessage = "No tasks yet. Add one above!";
 
 export function TaskList({
   tasks,
   onToggleTask,
   onUpdateTaskText,
   onDelete,
+  emptyMessage,
 }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400">
-        No tasks yet. Add one above!
+        {emptyMessage ?? defaultEmptyMessage}
       </p>
     );
   }
@@ -32,6 +37,8 @@ export function TaskList({
           id={task.id}
           text={task.text}
           completed={task.completed}
+          priority={task.priority}
+          dueDate={task.dueDate}
           onToggle={onToggleTask}
           onEdit={(updatedText) => onUpdateTaskText(task.id, updatedText)}
           onDelete={onDelete}

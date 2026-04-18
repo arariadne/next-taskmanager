@@ -1,12 +1,38 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import type { TaskPriority } from "@/lib/types";
 import { Button } from "@/components/Button";
+import { formatRelativeDueDate, isDueDatePast } from "@/lib/utils";
+
+const priorityBadgeStyles: Record<
+  TaskPriority,
+  { label: string; className: string }
+> = {
+  high: {
+    label: "High",
+    className:
+      "bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-200",
+  },
+  medium: {
+    label: "Medium",
+    className:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/80 dark:text-yellow-200",
+  },
+  low: {
+    label: "Low",
+    className:
+      "bg-green-100 text-green-800 dark:bg-green-950/80 dark:text-green-200",
+  },
+};
 
 type TaskItemProps = {
   id: string;
   text: string;
   completed: boolean;
+  priority: TaskPriority;
+  /** Local `YYYY-MM-DD` or null. */
+  dueDate: string | null;
   onToggle: (id: string) => void;
   onEdit: (updatedText: string) => void;
   onDelete: (id: string) => void;
@@ -16,6 +42,8 @@ export function TaskItem({
   id,
   text,
   completed,
+  priority,
+  dueDate,
   onToggle,
   onEdit,
   onDelete,
@@ -29,6 +57,11 @@ export function TaskItem({
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const errorId = useId();
   const deleteDialogTitleId = useId();
+
+  const dueLabel = useMemo(() => formatRelativeDueDate(dueDate), [dueDate]);
+  const showOverdueStyle = Boolean(
+    dueLabel && isDueDatePast(dueDate) && !completed,
+  );
 
   // Autofocus & select input when entering edit mode
   useEffect(() => {
@@ -110,6 +143,12 @@ export function TaskItem({
             aria-label={`Mark "${text}" as ${completed ? "incomplete" : "complete"}`}
             tabIndex={isEditing ? -1 : 0}
           />
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <span
+              className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${priorityBadgeStyles[priority].className}`}
+            >
+              {priorityBadgeStyles[priority].label}
+            </span>
           {isEditing ? (
             <form
               className="flex min-w-0 flex-1 flex-col gap-2"
@@ -187,6 +226,7 @@ export function TaskItem({
               {text}
             </button>
           )}
+          </div>
           <button
             type="button"
             onClick={openDeleteDialog}
@@ -213,6 +253,19 @@ export function TaskItem({
             </svg>
           </button>
         </div>
+        {dueLabel ? (
+          <p
+            className={`pl-7 ${
+              showOverdueStyle
+                ? "text-sm font-medium text-red-600 dark:text-red-400"
+                : completed
+                  ? "text-sm text-zinc-400 dark:text-zinc-500"
+                  : "text-sm text-zinc-500 dark:text-zinc-400"
+            }`}
+          >
+            Due {dueLabel}
+          </p>
+        ) : null}
       </div>
 
       <dialog
