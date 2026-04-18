@@ -8,6 +8,14 @@ import { TaskList } from "@/components/TaskList";
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  // Edit handler function that updates a task's text by id and passes to TaskItem as onEdit.
+  const handleEditTask = useCallback((id: string, updatedText: string) => {
+    const trimmed = updatedText.trim();
+    if (!trimmed) return;
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, text: trimmed } : t)),
+    );
+  }, []);
 
   const addTask = useCallback((text: string) => {
     setTasks((prev) => [
@@ -22,6 +30,14 @@ export default function Home() {
       prev.map((t) =>
         t.id === id ? { ...t, completed: !t.completed } : t,
       ),
+    );
+  }, []);
+
+  const updateTaskText = useCallback((id: string, nextText: string) => {
+    const trimmed = nextText.trim();
+    if (!trimmed) return;
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, text: trimmed } : t)),
     );
   }, []);
 
@@ -47,7 +63,11 @@ export default function Home() {
             >
               Your tasks
             </h2>
-            <TaskList tasks={tasks} onToggleTask={toggleTaskCompleted} />
+            <TaskList
+              tasks={tasks}
+              onToggleTask={toggleTaskCompleted}
+              onUpdateTaskText={updateTaskText}
+            />
           </section>
         </div>
       </main>
