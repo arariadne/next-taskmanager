@@ -7,9 +7,15 @@ type TaskListProps = {
   tasks: Task[];
   onToggleTask: (id: string) => void;
   onUpdateTaskText: (id: string, text: string) => void;
+  onDelete: (id: string) => void;
 };
 
-export function TaskList({ tasks, onToggleTask, onUpdateTaskText }: TaskListProps) {
+export function TaskList({
+  tasks,
+  onToggleTask,
+  onUpdateTaskText,
+  onDelete,
+}: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50/50 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/30 dark:text-zinc-400">
@@ -28,6 +34,7 @@ export function TaskList({ tasks, onToggleTask, onUpdateTaskText }: TaskListProp
           completed={task.completed}
           onToggle={onToggleTask}
           onEdit={(updatedText) => onUpdateTaskText(task.id, updatedText)}
+          onDelete={onDelete}
         />
       ))}
     </ul>

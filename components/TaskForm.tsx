@@ -18,7 +18,8 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     setText("");
   }
 
-  
+  const canAdd = text.trim().length > 0;
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -41,7 +42,12 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
           autoComplete="off"
         />
       </div>
-      <Button type="submit" variant="primary" className="shrink-0 sm:min-w-[120px]">
+      <Button
+        type="submit"
+        variant="primary"
+        disabled={!canAdd}
+        className="shrink-0 sm:min-w-[120px]"
+      >
         Add task
       </Button>
     </form>

@@ -8,14 +8,6 @@ import { TaskList } from "@/components/TaskList";
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  // Edit handler function that updates a task's text by id and passes to TaskItem as onEdit.
-  const handleEditTask = useCallback((id: string, updatedText: string) => {
-    const trimmed = updatedText.trim();
-    if (!trimmed) return;
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, text: trimmed } : t)),
-    );
-  }, []);
 
   const addTask = useCallback((text: string) => {
     setTasks((prev) => [
@@ -41,6 +33,13 @@ export default function Home() {
     );
   }, []);
 
+  const deleteTask = useCallback((id: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const completedCount = tasks.filter((t) => t.completed).length;
+  const totalCount = tasks.length;
+
   return (
     <div className="flex min-h-full flex-col bg-zinc-50 font-sans dark:bg-zinc-950">
       <main className="flex flex-1 flex-col">
@@ -59,14 +58,15 @@ export default function Home() {
           <section aria-labelledby="task-list-heading" className="space-y-3">
             <h2
               id="task-list-heading"
-              className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+              className="text-sm font-semibold tracking-wide text-zinc-600 dark:text-zinc-400"
             >
-              Your tasks
+              {completedCount} of {totalCount} completed
             </h2>
             <TaskList
               tasks={tasks}
               onToggleTask={toggleTaskCompleted}
               onUpdateTaskText={updateTaskText}
+              onDelete={deleteTask}
             />
           </section>
         </div>

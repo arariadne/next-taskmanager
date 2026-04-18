@@ -9,6 +9,7 @@ type TaskItemProps = {
   completed: boolean;
   onToggle: (id: string) => void;
   onEdit: (updatedText: string) => void;
+  onDelete: (id: string) => void;
 };
 
 export function TaskItem({
@@ -17,6 +18,7 @@ export function TaskItem({
   completed,
   onToggle,
   onEdit,
+  onDelete,
 }: TaskItemProps) {
   const checkboxId = `task-done-${id}`;
   const [isEditing, setIsEditing] = useState(false);
@@ -24,12 +26,9 @@ export function TaskItem({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const errorId = useId();
-
-  // When user changes text externally, reset edit field and messages
-  useEffect(() => {
-    if (!isEditing) setEditedText(text);
-  }, [text, isEditing]);
+  const deleteDialogTitleId = useId();
 
   // Autofocus & select input when entering edit mode
   useEffect(() => {
@@ -62,7 +61,7 @@ export function TaskItem({
       setIsEditing(false);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
-    } catch (e) {
+    } catch {
       setError("Failed to save changes. Please try again.");
     }
   };
@@ -72,6 +71,19 @@ export function TaskItem({
     setError(null);
     setSuccess(false);
     setIsEditing(false);
+  };
+
+  const openDeleteDialog = () => {
+    deleteDialogRef.current?.showModal();
+  };
+
+  const closeDeleteDialog = () => {
+    deleteDialogRef.current?.close();
+  };
+
+  const confirmDelete = () => {
+    onDelete(id);
+    closeDeleteDialog();
   };
 
   // Keyboard accessibility for editing
@@ -87,7 +99,7 @@ export function TaskItem({
 
   return (
     <li>
-      <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 transition-shadow">
+      <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition-shadow dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-start gap-3">
           <input
             id={checkboxId}
@@ -122,10 +134,9 @@ export function TaskItem({
                   onKeyDown={handleEditInputKeyDown}
                   aria-invalid={!!error}
                   aria-describedby={error ? errorId : undefined}
-                  className={`w-full rounded-md border-2 px-3 py-2 text-sm font-medium shadow-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/40 dark:bg-zinc-900 dark:text-zinc-100 
-                    ${error ? "border-red-500 ring-red-200" : "border-[#3B82F6] ring-[#3B82F6]/25"}
+                  className={`w-full rounded-md border-2 bg-white px-3 py-2 text-sm font-medium text-zinc-950 caret-zinc-950 shadow-sm placeholder:text-zinc-400 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/40 dark:bg-zinc-800 dark:text-zinc-50 dark:caret-zinc-50 dark:placeholder:text-zinc-500 
+                    ${error ? "border-red-500 ring-red-200 dark:border-red-500" : "border-[#3B82F6] ring-[#3B82F6]/25"}
                   `}
-                  style={{ background: "#fafdff" }}
                   autoComplete="off"
                   maxLength={100}
                 />
@@ -176,8 +187,75 @@ export function TaskItem({
               {text}
             </button>
           )}
+          <button
+            type="button"
+            onClick={openDeleteDialog}
+            aria-label={`Delete task "${text}"`}
+            aria-haspopup="dialog"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-400 dark:hover:border-red-800 dark:hover:bg-red-950 dark:hover:text-red-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+              aria-hidden
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+              <line x1="10" x2="10" y1="11" y2="17" />
+              <line x1="14" x2="14" y1="11" y2="17" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      <dialog
+        ref={deleteDialogRef}
+        aria-labelledby={deleteDialogTitleId}
+        onClick={(e) => {
+          if (e.target === deleteDialogRef.current) closeDeleteDialog();
+        }}
+        className="fixed left-1/2 top-1/2 z-50 m-0 max-h-[min(90dvh,calc(100vh-2rem))] w-[min(100%,22rem)] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-0 text-zinc-900 shadow-2xl dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 [&::backdrop]:bg-black/50"
+      >
+        <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+          <h3
+            id={deleteDialogTitleId}
+            className="text-base font-semibold text-zinc-900 dark:text-zinc-50"
+          >
+            Delete this task?
+          </h3>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            This can&apos;t be undone. The task will be removed from your list.
+          </p>
+        </div>
+        <div className="px-5 py-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+            Task
+          </p>
+          <p className="mt-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+            {text}
+          </p>
+        </div>
+        <div className="flex flex-col-reverse gap-2 border-t border-zinc-100 px-5 py-4 sm:flex-row sm:justify-end dark:border-zinc-800">
+          <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={closeDeleteDialog}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            className="w-full bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:outline-red-600 sm:w-auto"
+            onClick={confirmDelete}
+          >
+            Delete task
+          </Button>
+        </div>
+      </dialog>
     </li>
   );
 }
