@@ -11,6 +11,7 @@ type TaskFilter = "all" | "active" | "completed";
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const addTask = useCallback(
     (text: string, priority: TaskPriority, dueDate: string | null) => {
@@ -46,7 +47,7 @@ export default function Home() {
   const completedCount = tasks.filter((t) => t.completed).length;
   const totalCount = tasks.length;
 
-  const filteredTasks = useMemo(() => {
+  const statusFilteredTasks = useMemo(() => {
     if (taskFilter === "active") {
       return tasks.filter((t) => !t.completed);
     }
@@ -56,11 +57,26 @@ export default function Home() {
     return tasks;
   }, [tasks, taskFilter]);
 
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredTasks = useMemo(() => {
+    if (!normalizedSearchQuery) return statusFilteredTasks;
+    return statusFilteredTasks.filter((t) =>
+      t.text.toLowerCase().includes(normalizedSearchQuery),
+    );
+  }, [statusFilteredTasks, normalizedSearchQuery]);
+
   const filterEmptyMessage =
     tasks.length > 0 && filteredTasks.length === 0
-      ? taskFilter === "active"
-        ? "No active tasks."
-        : "No completed tasks."
+      ? normalizedSearchQuery
+        ? taskFilter === "all"
+          ? "No tasks match your search."
+          : taskFilter === "active"
+            ? "No active tasks match your search."
+            : "No completed tasks match your search."
+        : taskFilter === "active"
+          ? "No active tasks."
+          : "No completed tasks."
       : undefined;
 
   const filterButtons: { value: TaskFilter; label: string }[] = [
@@ -115,6 +131,27 @@ export default function Home() {
                   </button>
                 );
               })}
+            </div>
+
+            <div className="flex w-full items-center gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search tasks..."
+                aria-label="Search tasks"
+                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#3B82F6] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                disabled={searchQuery.length === 0}
+                className="shrink-0 rounded-md border border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B82F6] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                aria-label="Clear search"
+              >
+                Clear
+              </button>
             </div>
 
             <TaskList
