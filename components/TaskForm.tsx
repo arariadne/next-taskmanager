@@ -4,20 +4,21 @@ import { FormEvent, useState } from "react";
 import { Button } from "@/components/Button";
 
 type TaskFormProps = {
-  onAddTask: (title: string) => void;
+  onAddTask: (text: string) => void;
 };
 
 export function TaskForm({ onAddTask }: TaskFormProps) {
-  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const trimmed = title.trim();
+    const trimmed = text.trim();
     if (!trimmed) return;
     onAddTask(trimmed);
-    setTitle("");
+    setText("");
   }
 
+  
   return (
     <form
       onSubmit={handleSubmit}
@@ -25,16 +26,16 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <label
-          htmlFor="task-title"
+          htmlFor="task-text"
           className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
         >
-          Task title
+          Task
         </label>
         <input
-          id="task-title"
+          id="task-text"
           type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
           placeholder="What do you need to do?"
           className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#3B82F6] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           autoComplete="off"
