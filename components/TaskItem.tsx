@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { TaskPriority } from "@/lib/types";
 import { Button } from "@/components/Button";
 import { formatRelativeDueDate, isDueDatePast } from "@/lib/utils";
@@ -34,11 +34,12 @@ type TaskItemProps = {
   /** Local `YYYY-MM-DD` or null. */
   dueDate: string | null;
   onToggle: (id: string) => void;
-  onEdit: (updatedText: string) => { ok: boolean; message?: string };
+  onEdit: (id: string, updatedText: string) => { ok: boolean; message?: string };
   onDelete: (id: string) => { ok: boolean; message?: string };
+  animationState?: "idle" | "entering" | "exiting";
 };
 
-export function TaskItem({
+function TaskItemComponent({
   id,
   text,
   completed,
@@ -47,6 +48,7 @@ export function TaskItem({
   onToggle,
   onEdit,
   onDelete,
+  animationState = "idle",
 }: TaskItemProps) {
   const checkboxId = `task-done-${id}`;
   const [isEditing, setIsEditing] = useState(false);
@@ -56,6 +58,7 @@ export function TaskItem({
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const errorId = useId();
   const deleteDialogTitleId = useId();
+  const [isVisible, setIsVisible] = useState(animationState !== "entering");
 
   const dueLabel = useMemo(() => formatRelativeDueDate(dueDate), [dueDate]);
   const showOverdueStyle = Boolean(
@@ -72,6 +75,19 @@ export function TaskItem({
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    if (animationState === "entering") {
+      setIsVisible(false);
+      const frameId = window.requestAnimationFrame(() => {
+        setIsVisible(true);
+      });
+      return () => window.cancelAnimationFrame(frameId);
+    }
+    if (animationState === "idle") {
+      setIsVisible(true);
+    }
+  }, [animationState]);
+
   const startEditing = () => {
     setEditedText(text);
     setError(null);
@@ -87,7 +103,7 @@ export function TaskItem({
     }
     try {
       setError(null);
-      const result = onEdit(trimmed);
+      const result = onEdit(id, trimmed);
       if (!result.ok) {
         setError(result.message ?? "Failed to save changes. Please try again.");
         return;
@@ -133,7 +149,15 @@ export function TaskItem({
   };
 
   return (
-    <li>
+    <li
+      className={`transition-all duration-300 ease-out motion-reduce:transition-none ${
+        animationState === "exiting"
+            ? "pointer-events-none -translate-y-1 opacity-0"
+            : isVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-1 opacity-0"
+      }`}
+    >
       <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition-shadow dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex items-start gap-3">
           <input
@@ -171,6 +195,7 @@ export function TaskItem({
                     setError(null);
                   }}
                   onKeyDown={handleEditInputKeyDown}
+                  aria-label="Edit task text"
                   aria-invalid={!!error}
                   aria-describedby={error ? errorId : undefined}
                   className={`w-full rounded-md border-2 bg-white px-3 py-2 text-sm font-medium text-zinc-950 caret-zinc-950 shadow-sm placeholder:text-zinc-400 focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/40 dark:bg-zinc-800 dark:text-zinc-50 dark:caret-zinc-50 dark:placeholder:text-zinc-500 
@@ -184,10 +209,16 @@ export function TaskItem({
                     type="submit"
                     variant="primary"
                     onClick={handleSave}
+                    aria-label={`Save changes to "${text}"`}
                   >
                     Save
                   </Button>
-                  <Button type="button" variant="secondary" onClick={handleCancel}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleCancel}
+                    aria-label={`Cancel editing "${text}"`}
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -291,7 +322,13 @@ export function TaskItem({
           </p>
         </div>
         <div className="flex flex-col-reverse gap-2 border-t border-zinc-100 px-5 py-4 sm:flex-row sm:justify-end dark:border-zinc-800">
-          <Button type="button" variant="secondary" className="w-full sm:w-auto" onClick={closeDeleteDialog}>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full sm:w-auto"
+            onClick={closeDeleteDialog}
+            aria-label={`Cancel deleting "${text}"`}
+          >
             Cancel
           </Button>
           <Button
@@ -299,6 +336,7 @@ export function TaskItem({
             variant="primary"
             className="w-full bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:outline-red-600 sm:w-auto"
             onClick={confirmDelete}
+            aria-label={`Confirm deletion of "${text}"`}
           >
             Delete task
           </Button>
@@ -307,3 +345,5 @@ export function TaskItem({
     </li>
   );
 }
+
+export const TaskItem = memo(TaskItemComponent);
