@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Task, TaskPriority } from "@/lib/types";
 import { createTaskId } from "@/lib/utils";
 import { TaskForm } from "@/components/TaskForm";
@@ -10,11 +10,13 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 type TaskFilter = "all" | "active" | "completed";
 type ActionResult = { ok: boolean; message?: string };
+const SEARCH_DEBOUNCE_MS = 250;
 
 export default function Home() {
   const [tasks, setTasks] = useLocalStorage<Task[]>("tasks", []);
   const [theme, setTheme] = useLocalStorage<"light" | "dark">("theme", "light");
   const [taskFilter, setTaskFilter] = useState<TaskFilter>("all");
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState<{ id: number; type: ToastType; message: string } | null>(null);
   const toastCounterRef = useRef(0);
@@ -23,6 +25,16 @@ export default function Home() {
     toastCounterRef.current += 1;
     setToast({ id: toastCounterRef.current, type, message });
   }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchInput]);
 
   const addTask = useCallback(
     (text: string, priority: TaskPriority, dueDate: string | null): ActionResult => {
@@ -222,8 +234,8 @@ export default function Home() {
             <div className="flex w-full items-center gap-2">
               <input
                 type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search tasks..."
                 aria-label="Search tasks"
                 className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#3B82F6] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
@@ -231,8 +243,11 @@ export default function Home() {
               />
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
-                disabled={searchQuery.length === 0}
+                onClick={() => {
+                  setSearchInput("");
+                  setSearchQuery("");
+                }}
+                disabled={searchInput.length === 0}
                 className="shrink-0 rounded-md border border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B82F6] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
                 aria-label="Clear search"
               >
