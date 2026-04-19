@@ -6,8 +6,8 @@ import { TaskItem } from "@/components/TaskItem";
 type TaskListProps = {
   tasks: Task[];
   onToggleTask: (id: string) => void;
-  onUpdateTaskText: (id: string, text: string) => void;
-  onDelete: (id: string) => void;
+  onUpdateTaskText: (id: string, text: string) => { ok: boolean; message?: string };
+  onDelete: (id: string) => { ok: boolean; message?: string };
   /** Shown when there are no tasks to render (e.g. empty filter). */
   emptyMessage?: string;
 };
