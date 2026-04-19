@@ -39,7 +39,7 @@ export default function Home() {
         return { ok: false, message };
       }
     },
-    [showToast],
+    [setTasks, showToast],
   );
 
   /** Flips `completed` for the task with the given id. */
@@ -49,7 +49,7 @@ export default function Home() {
         t.id === id ? { ...t, completed: !t.completed } : t,
       ),
     );
-  }, []);
+  }, [setTasks]);
 
   const updateTaskText = useCallback((id: string, nextText: string): ActionResult => {
     const trimmed = nextText.trim();
@@ -80,7 +80,7 @@ export default function Home() {
       showToast("error", message);
       return { ok: false, message };
     }
-  }, [showToast]);
+  }, [setTasks, showToast]);
 
   const deleteTask = useCallback((id: string): ActionResult => {
     let removed = false;
@@ -104,7 +104,7 @@ export default function Home() {
       showToast("error", message);
       return { ok: false, message };
     }
-  }, [showToast]);
+  }, [setTasks, showToast]);
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const totalCount = tasks.length;
