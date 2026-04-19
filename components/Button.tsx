@@ -11,7 +11,7 @@ const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary:
     "bg-[#3B82F6] text-white hover:bg-[#2563EB] active:bg-[#1D4ED8]",
   secondary:
-    "bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400",
+    "bg-zinc-200 text-zinc-900 hover:bg-zinc-300 active:bg-zinc-400 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:active:bg-zinc-600",
 };
 
 export function Button({

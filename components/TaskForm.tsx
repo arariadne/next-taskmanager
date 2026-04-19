@@ -5,7 +5,11 @@ import type { TaskPriority } from "@/lib/types";
 import { Button } from "@/components/Button";
 
 type TaskFormProps = {
-  onAddTask: (text: string, priority: TaskPriority, dueDate: string | null) => void;
+  onAddTask: (
+    text: string,
+    priority: TaskPriority,
+    dueDate: string | null,
+  ) => { ok: boolean; message?: string };
 };
 
 export function TaskForm({ onAddTask }: TaskFormProps) {
@@ -18,10 +22,12 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     const trimmed = text.trim();
     if (!trimmed) return;
     const due = dueDate.trim() === "" ? null : dueDate.trim();
-    onAddTask(trimmed, priority, due);
-    setText("");
-    setPriority("medium");
-    setDueDate("");
+    const result = onAddTask(trimmed, priority, due);
+    if (result.ok) {
+      setText("");
+      setPriority("medium");
+      setDueDate("");
+    }
   }
 
   const canAdd = text.trim().length > 0;
@@ -29,7 +35,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end dark:border-zinc-800 dark:bg-zinc-950"
+      className="flex w-full flex-col gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-end dark:border-zinc-700 dark:bg-zinc-900"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[12rem]">
         <label

@@ -34,8 +34,8 @@ type TaskItemProps = {
   /** Local `YYYY-MM-DD` or null. */
   dueDate: string | null;
   onToggle: (id: string) => void;
-  onEdit: (updatedText: string) => void;
-  onDelete: (id: string) => void;
+  onEdit: (updatedText: string) => { ok: boolean; message?: string };
+  onDelete: (id: string) => { ok: boolean; message?: string };
 };
 
 export function TaskItem({
@@ -52,7 +52,6 @@ export function TaskItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(text);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
   const errorId = useId();
@@ -76,7 +75,6 @@ export function TaskItem({
   const startEditing = () => {
     setEditedText(text);
     setError(null);
-    setSuccess(false);
     setIsEditing(true);
   };
 
@@ -84,16 +82,17 @@ export function TaskItem({
     const trimmed = editedText.trim();
     if (!trimmed) {
       setError("Task text cannot be empty.");
-      setSuccess(false);
       inputRef.current?.focus();
       return;
     }
     try {
       setError(null);
-      onEdit(trimmed);
+      const result = onEdit(trimmed);
+      if (!result.ok) {
+        setError(result.message ?? "Failed to save changes. Please try again.");
+        return;
+      }
       setIsEditing(false);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 2000);
     } catch {
       setError("Failed to save changes. Please try again.");
     }
@@ -102,7 +101,6 @@ export function TaskItem({
   const handleCancel = () => {
     setEditedText(text);
     setError(null);
-    setSuccess(false);
     setIsEditing(false);
   };
 
@@ -115,8 +113,12 @@ export function TaskItem({
   };
 
   const confirmDelete = () => {
-    onDelete(id);
-    closeDeleteDialog();
+    const result = onDelete(id);
+    if (result.ok) {
+      closeDeleteDialog();
+    } else {
+      setError(result.message ?? "Failed to delete task. Please try again.");
+    }
   };
 
   // Keyboard accessibility for editing
@@ -132,7 +134,7 @@ export function TaskItem({
 
   return (
     <li>
-      <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition-shadow dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition-shadow dark:border-zinc-700 dark:bg-zinc-900">
         <div className="flex items-start gap-3">
           <input
             id={checkboxId}
@@ -164,11 +166,9 @@ export function TaskItem({
                   ref={inputRef}
                   type="text"
                   value={editedText}
-                  disabled={success}
                   onChange={(e) => {
                     setEditedText(e.target.value);
                     setError(null);
-                    setSuccess(false);
                   }}
                   onKeyDown={handleEditInputKeyDown}
                   aria-invalid={!!error}
@@ -184,7 +184,6 @@ export function TaskItem({
                     type="submit"
                     variant="primary"
                     onClick={handleSave}
-                    disabled={success}
                   >
                     Save
                   </Button>
@@ -197,10 +196,6 @@ export function TaskItem({
                 <p id={errorId} role="alert" className="text-sm text-red-600 dark:text-red-400">
                   {error}
                 </p>
-              ) : success ? (
-                <span className="text-sm text-green-600 dark:text-green-400">
-                  Task updated!
-                </span>
               ) : null}
             </form>
           ) : (
